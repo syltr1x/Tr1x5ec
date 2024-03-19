@@ -87,12 +87,3 @@ def descifrar(algoritmo, clave, data):
     else:
         print("Algoritmo no válido.")
         return None
-
-#create_key('AES', 256)
-with open('data/passwords/google.bin', 'rb') as f:
-    a = f.read()
-b = descifrar('RSA', 'google', a)
-print(b)
-#descifrar_archivo_aes('test.txt.bin', get_key('---', 'AES'))
-#descifrado = descifrar_texto('RSA', cifrado)
-#print("Texto descifrado:", descifrado)
