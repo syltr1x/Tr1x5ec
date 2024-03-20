@@ -7,37 +7,37 @@ import os, random as r
 def gen_key():
     return r.randint(100, 200)
 
-def create_key(algoritmo, longitud=256, name=f"clave_{len(os.listdir('data/keys'))}"):
+def create_key(algoritmo, dato='', longitud=256, name=f"clave_{len(os.listdir('tray/'))}"):
     if algoritmo == 'RSA':
         key = RSA.generate(longitud)
         pub_key = key.publickey().export_key()
         priv_key = key.export_key()
-        with open(f"data/keys/{name}.pub.pem", "wb") as f:
+        with open(f"tray/{name}.pub.pem", "wb") as f:
             f.write(pub_key)
         with open(f"data/keys/{name}.pri.pem", "wb") as f:
             f.write(priv_key)
         print("Claves RSA creadas correctamente.")
     elif algoritmo == 'AES':
         key = os.urandom(longitud // 8)
-        with open(f"data/keys/{name}_key.bin", "wb") as f:
+        with open(f"data/secrets/{name}_{dato}_key.bin", "wb") as f:
             f.write(key)
         print("Clave AES creada correctamente.")
     else:
         print("Algoritmo no válido.")
 
-def get_key(tipo, algoritmo, name):
+def get_key(tipo, algoritmo, name, dato):
     try: 
         if algoritmo == 'RSA':
             if tipo == 'pub': 
-                with open(f'data/keys/{name}.pub.pem', 'rb') as pkp: 
+                with open(f'tray/{name}.pub.pem', 'rb') as pkp: 
                     key = RSA.import_key(pkp.read())
                 pkp.close()
             else: 
-                with open(f'data/keys/{name}.pri.pem', 'rb') as pkp:
+                with open(f'tray/{name}.pri.pem', 'rb') as pkp:
                     key = RSA.import_key(pkp.read())
                 pkp.close()
         elif algoritmo == 'AES':
-            with open(f"{name}_key.bin", "rb") as f:
+            with open(f"data/secrets/{name}_{dato}_key.bin", "rb") as f:
                 key = f.read()
     except FileNotFoundError:
         create_key(algoritmo, int(input("Tamaño para la clave. ej: 1024, 4096 >> ")))
