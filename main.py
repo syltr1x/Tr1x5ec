@@ -43,12 +43,14 @@ def add_key_frm():
         elif secret == "AES":
             length.configure(values=["64", "128", "256"])
 
-    def create_aes(name, size):
-        cypher.create_key('AES', 'user', size, name)
-        cypher.create_key('AES', 'password', size, name)
-        cypher.create_key('AES', 'emails', size, name)
-        cypher.create_key('AES', 'keys', size, name)
-
+    def create_key(algoritmo, name, size):
+        if algoritmo == "AES":
+            cypher.create_key('AES', 'user', size, name)
+            cypher.create_key('AES', 'password', size, name)
+            cypher.create_key('AES', 'emails', size, name)
+            cypher.create_key('AES', 'keys', size, name)
+        else:
+            cypher.create_key('RSA', longitud=size, name=name)
     ktype = ctk.CTkComboBox(Frame, values=["RSA", "AES"], width=220, command=change_sizes)
     ktype.set('Algoritmo')
     ktype.grid(row=0, column=0, padx=5, pady=5, columnspan=2)
@@ -57,8 +59,7 @@ def add_key_frm():
     length = ctk.CTkOptionMenu(Frame, values=[], width=100)
     length.set('Longitud')
     length.grid(row=1, column=1, padx=5, pady=5)
-    create = ctk.CTkButton(Frame, text="Crear Clave", command=lambda:(cypher.create_key(ktype.get(), 
-            longitud=int(length.get()), name=name.get())), width=100)
+    create = ctk.CTkButton(Frame, text="Crear Clave", command=lambda:(create_key(ktype.get(), name.get(), length.get())), width=100)
     create.grid(row=2, column=0, padx=5, pady=5, columnspan=2)
 
     Frame.mainloop()
