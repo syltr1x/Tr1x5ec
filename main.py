@@ -7,6 +7,7 @@ import cypher
 ########################################
 
 def add_account(net, user, email, pwd, keyName, tkey):
+    otkey = tkey
     user = cypher.cifrar('RSA', keyName, user)
     pwd = cypher.cifrar('RSA', keyName, pwd)
     email = cypher.cifrar('RSA', keyName, email)
@@ -15,7 +16,7 @@ def add_account(net, user, email, pwd, keyName, tkey):
     fu = open(f'data/users/{net}.bin', 'wb')
     fu.write(user) 
     fu.close()
-    
+
     fp = open(f'data/passwords/{net}.bin', 'wb')
     fp.write(pwd)
     fp.close()
@@ -27,6 +28,18 @@ def add_account(net, user, email, pwd, keyName, tkey):
     fk = open(f'data/keys/{net}.bin', 'wb')
     fk.write(tkey)
     fk.close()
+
+    fk = open(f'data/keys/{net}.txt', 'w')
+    fk.write(str(otkey))
+    fk.close()
+
+    input("PAUSA PRE AES")
+
+    cypher.cifrar('AES', keyName, f'data/users/{net}.bin', 'user')
+    cypher.cifrar('AES', keyName, f'data/passwords/{net}.bin', 'password')
+    cypher.cifrar('AES', keyName, f'data/emails/{net}.bin', 'email')
+    cypher.cifrar('AES', keyName, f'data/keys/{net}.bin', 'key')
+
 
 ########################################
 ################ FRAMES ################
@@ -49,8 +62,8 @@ def add_key_frm():
         if algoritmo == "AES":
             cypher.create_key('AES', 'user', size, name)
             cypher.create_key('AES', 'password', size, name)
-            cypher.create_key('AES', 'emails', size, name)
-            cypher.create_key('AES', 'keys', size, name)
+            cypher.create_key('AES', 'email', size, name)
+            cypher.create_key('AES', 'key', size, name)
         else:
             cypher.create_key('RSA', longitud=size, name=name)
     ktype = ctk.CTkComboBox(Frame, values=["RSA", "AES"], width=220, command=change_sizes)
@@ -93,18 +106,41 @@ def add_account_frm():
 
     Frame.mainloop()
 
+def query_account(query, dato):
+    if config["fieldsforaccount"] == 1:
+        cypher.descifrar('AES', dato["akey"], f'data/keys/{dato["net"]}.bin', 'key')
+        input("PAUSA 1")
+        rsakey = open(f'data/keys/{dato["net"]}', 'rb').read()
+        input("PAUSA 2")
+        cypher.cifrar('AES', dato["akey"], f'data/keys/{dato["net"]}.bin', 'key')
+        input("PAUSA 3")
+        if dato["key"] == cypher.descifrar('RSA', dato["rkey"], rsakey):
+            print("AAA")
+        else: 
+            exit()
 
 def get_account_frm():
     Frame = ctk.CTk()
     Frame.title("Mostrar Cuenta | Tr1x-5ec")
-    Frame.geometry("370x330")
+    Frame.geometry("370x380")
+
+    rsakeys = list(set([i.split('.')[0] for i in os.listdir('tray/')]))
+    aeskeys = list(set([i.split('_')[0] for i in os.listdir('data/secrets/')]))
+    nets = [i.split('.')[0] for i in os.listdir('data/users')]
 
     tabs = ctk.CTkTabview(Frame)
-    tabs.grid(row=0, column=0, padx=20, pady=18)
+    tabs.grid(row=0, column=0, padx=20, pady=18, columnspan=3)
     tabs.add('Usuario')
     tabs.add('Email')
     tabs.add('Contraseña')
     tabs.add('Clave')
+
+    rsa_sel = ctk.CTkOptionMenu(Frame, values=rsakeys)
+    rsa_sel.grid(row=1, column=0, padx=5, pady=5)
+    aes_sel = ctk.CTkOptionMenu(Frame, values=aeskeys)
+    aes_sel.grid(row=1, column=1, padx=5, pady=5)
+    net_sel = ctk.CTkOptionMenu(Frame, values=nets)
+    net_sel.grid(row=2, column=0, padx=5, pady=5)
 
     email_user = ctk.CTkEntry(tabs.tab('Usuario'), placeholder_text="Correo Electronico", width=150)
     password_user = ctk.CTkEntry(tabs.tab('Usuario'), placeholder_text="Contraseña", width=150)
@@ -118,7 +154,7 @@ def get_account_frm():
     user_email = ctk.CTkEntry(tabs.tab('Email'), placeholder_text="Usuario", width=150)
     password_email = ctk.CTkEntry(tabs.tab('Email'), placeholder_text="Contraseña", width=150)
     key_email = ctk.CTkEntry(tabs.tab('Email'), placeholder_text="Clave", width=150)
-    btn_email = ctk.CTkButton(tabs.tab('Email'), text="Ingresar", width=150)
+    btn_email = ctk.CTkButton(tabs.tab('Email'), text="Ingresar", width=150, command=lambda:(query_account({"user":user_email.get()})))
     user_email.grid(row=0, column=0, padx=5, pady=5)
     password_email.grid(row=0, column=1, padx=5, pady=5)
     key_email.grid(row=1, column=0, padx=5, pady=5)
@@ -127,7 +163,7 @@ def get_account_frm():
     user_pwd = ctk.CTkEntry(tabs.tab('Contraseña'), placeholder_text="Usuario", width=150)
     email_pwd = ctk.CTkEntry(tabs.tab('Contraseña'), placeholder_text="Correo Electronico", width=150)
     key_pwd = ctk.CTkEntry(tabs.tab('Contraseña'), placeholder_text="Clave", width=150)
-    btn_pwd = ctk.CTkButton(tabs.tab('Contraseña'), text="Ingresar", width=150)
+    btn_pwd = ctk.CTkButton(tabs.tab('Contraseña'), text="Ingresar", width=150, command=lambda:(query_account('', {"user":user_pwd.get(), "email":email_pwd.get(), "key":key_pwd.get(), "akey":aes_sel.get(), "rkey":rsa_sel.get(), "net":net_sel.get()})))
     user_pwd.grid(row=0, column=0, padx=5, pady=5)
     email_pwd.grid(row=0, column=1, padx=5, pady=5)
     key_pwd.grid(row=1, column=0, padx=5, pady=5)
@@ -154,7 +190,7 @@ App.title("Tr1x-5ec")
 App.geometry("430x430")
 
 btn1 = ctk.CTkButton(App, text="Añadir Cuenta", command=add_account_frm, width=100)
-btn1.configure(state="disabled", fg_color='#144870') if len(os.listdir('data/keys/')) >= 4 and len(os.listdir('tray/')) >= 1 else None
+btn1.configure(state="disabled", fg_color='#144870') if not len(os.listdir('data/secrets/')) >= 4 or not len(os.listdir('tray/')) >= 1 else None
 btn1.grid(row=0, column=0, padx=5, pady=5)
 
 btn2 = ctk.CTkButton(App, text="Consultar Cuenta", command=get_account_frm, width=100)
@@ -164,6 +200,7 @@ btn2.grid(row=0, column=1, padx=5, pady=5)
 btn3 = ctk.CTkButton(App, text="Añadir Clave", command=add_key_frm, width=220)
 btn3.grid(row=1, column=0, padx=5, pady=5, columnspan=2)
 
+global config
 try:
     conf = open('config.json', 'r').read()
     config = json.loads(conf)
