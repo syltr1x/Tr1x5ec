@@ -14,12 +14,12 @@ def create_key(algoritmo, dato='', longitud=256, name=f"clave_{len(os.listdir('t
         priv_key = key.export_key()
         with open(f"tray/{name}.pub.pem", "wb") as f:
             f.write(pub_key)
-        with open(f"data/keys/{name}.pri.pem", "wb") as f:
+        with open(f"tray/{name}.pri.pem", "wb") as f:
             f.write(priv_key)
         print("Claves RSA creadas correctamente.")
     elif algoritmo == 'AES':
         key = os.urandom(longitud // 8)
-        with open(f"data/secrets/{name}_{dato}_key.bin", "wb") as f:
+        with open(f"data/secrets/{name}_{dato}.bin", "wb") as f:
             f.write(key)
         print("Clave AES creada correctamente.")
     else:
@@ -37,17 +37,17 @@ def get_key(tipo, algoritmo, name, dato):
                     key = RSA.import_key(pkp.read())
                 pkp.close()
         elif algoritmo == 'AES':
-            with open(f"data/secrets/{name}_{dato}_key.bin", "rb") as f:
+            with open(f"data/secrets/{name}_{dato}.bin", "rb") as f:
                 key = f.read()
     except FileNotFoundError:
         create_key(algoritmo, int(input("Tamaño para la clave. ej: 1024, 4096 >> ")))
         key = get_key(tipo, algoritmo)
     return key
 
-def cifrar(algoritmo, clave, data):
-    data = data.encode()
-    key = get_key('pub', algoritmo, clave)
+def cifrar(algoritmo, clave, data, dato=''):
+    key = get_key('pub', algoritmo, clave, dato)
     if algoritmo == 'RSA':
+        data = data.encode()
         cipher_rsa = PKCS1_OAEP.new(key)
         ciphertext = cipher_rsa.encrypt(data)
         return ciphertext
@@ -60,16 +60,16 @@ def cifrar(algoritmo, clave, data):
         length = 16 - (len(data) % 16)
         data += bytes([length]) * length
         ciphertext = cipher.encrypt(data)
-        with open(f'{filepath}.bin', 'wb') as file_out:
-            file_out.write(iv)
+        with open(f'{filepath}', 'wb') as file_out:
+            file_out.write(iv)  
             file_out.write(ciphertext)
         print("Archivo cifrado correctamente.")
     else:
         print("Algoritmo no válido.")
         return None
     
-def descifrar(algoritmo, clave, data):
-    key = get_key('pri', algoritmo, clave)
+def descifrar(algoritmo, clave, data, dato=''):
+    key = get_key('pri', algoritmo, clave, dato)
     if algoritmo == 'RSA':
         cipher_rsa = PKCS1_OAEP.new(key)
         plaintext = cipher_rsa.decrypt(data)
@@ -82,7 +82,7 @@ def descifrar(algoritmo, clave, data):
         plaintext = cipher.decrypt(ciphertext)
         padding_length = plaintext[-1]
         plaintext = plaintext[:-padding_length]
-        with open(data[:-4], 'wb') as file_out:
+        with open(data, 'wb') as file_out:
             file_out.write(plaintext)
     else:
         print("Algoritmo no válido.")
