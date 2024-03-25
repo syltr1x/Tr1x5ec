@@ -63,7 +63,6 @@ def cifrar(algoritmo, clave, data, dato=''):
         with open(f'{filepath}', 'wb') as file_out:
             file_out.write(iv)  
             file_out.write(ciphertext)
-        print("Archivo cifrado correctamente.")
     else:
         print("Algoritmo no válido.")
         return None

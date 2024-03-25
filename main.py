@@ -7,7 +7,6 @@ import cypher
 ########################################
 
 def add_account(net, user, email, pwd, keyName, tkey):
-    otkey = tkey
     user = cypher.cifrar('RSA', keyName, user)
     pwd = cypher.cifrar('RSA', keyName, pwd)
     email = cypher.cifrar('RSA', keyName, email)
@@ -28,18 +27,18 @@ def add_account(net, user, email, pwd, keyName, tkey):
     fk = open(f'data/keys/{net}.bin', 'wb')
     fk.write(tkey)
     fk.close()
-
-    fk = open(f'data/keys/{net}.txt', 'w')
-    fk.write(str(otkey))
-    fk.close()
-
-    input("PAUSA PRE AES")
-
-    cypher.cifrar('AES', keyName, f'data/users/{net}.bin', 'user')
-    cypher.cifrar('AES', keyName, f'data/passwords/{net}.bin', 'password')
-    cypher.cifrar('AES', keyName, f'data/emails/{net}.bin', 'email')
-    cypher.cifrar('AES', keyName, f'data/keys/{net}.bin', 'key')
-
+    
+    if config["singleaesforfile"] == 1:
+        cypher.cifrar('AES', keyName, f'data/users/{net}.bin', 'all')
+        cypher.cifrar('AES', keyName, f'data/passwords/{net}.bin', 'all')
+        cypher.cifrar('AES', keyName, f'data/emails/{net}.bin', 'all')
+        cypher.cifrar('AES', keyName, f'data/keys/{net}.bin', 'all')
+    elif config["singleaesforfile"] == 0:
+        cypher.cifrar('AES', keyName, f'data/users/{net}.bin', 'user')
+        cypher.cifrar('AES', keyName, f'data/passwords/{net}.bin', 'password')
+        cypher.cifrar('AES', keyName, f'data/emails/{net}.bin', 'email')
+        cypher.cifrar('AES', keyName, f'data/keys/{net}.bin', 'key')
+    else: exit()
 
 ########################################
 ################ FRAMES ################
@@ -57,15 +56,25 @@ def add_key_frm():
         elif secret == "AES":
             length.configure(values=["64", "128", "256"])
             length.set('Longitudes AES')
+        else: 
+            length.configure(values=[""])
+            length.set('Algoritmo no encontrado.')
 
     def create_key(algoritmo, name, size):
         if algoritmo == "AES":
-            cypher.create_key('AES', 'user', size, name)
-            cypher.create_key('AES', 'password', size, name)
-            cypher.create_key('AES', 'email', size, name)
-            cypher.create_key('AES', 'key', size, name)
-        else:
+            if config["singleaesforfile"] == 1:
+                cypher.create_key('AES', 'all', size, name)
+            elif config["singleaesforfile"] == 0:
+                cypher.create_key('AES', 'user', size, name)
+                cypher.create_key('AES', 'password', size, name)
+                cypher.create_key('AES', 'email', size, name)
+                cypher.create_key('AES', 'key', size, name)
+            else: exit()
+        elif algoritmo == "RSA":
+            if config["singlersaforkey"] == 1:
+                cypher.create_key('RSA', longitud=size, name=f"{name}_key")
             cypher.create_key('RSA', longitud=size, name=name)
+        else: exit()
     ktype = ctk.CTkComboBox(Frame, values=["RSA", "AES"], width=220, command=change_sizes)
     ktype.set('Algoritmo')
     ktype.grid(row=0, column=0, padx=5, pady=5, columnspan=2)
@@ -107,17 +116,58 @@ def add_account_frm():
     Frame.mainloop()
 
 def query_account(query, dato):
-    if config["fieldsforaccount"] == 1:
+    if query != 'key':
         cypher.descifrar('AES', dato["akey"], f'data/keys/{dato["net"]}.bin', 'key')
-        input("PAUSA 1")
-        rsakey = open(f'data/keys/{dato["net"]}', 'rb').read()
-        input("PAUSA 2")
+        rsakey = open(f'data/keys/{dato["net"]}.bin', 'rb').read()
         cypher.cifrar('AES', dato["akey"], f'data/keys/{dato["net"]}.bin', 'key')
-        input("PAUSA 3")
+        if query != 'user':
+            cypher.descifrar('AES', dato["akey"], f'data/users/{dato["net"]}.bin', 'user')
+            rsauser = open(f'data/users/{dato["net"]}.bin', 'rb').read()
+            cypher.cifrar('AES', dato["akey"], f'data/users/{dato["net"]}.bin', 'user')
+        if query != 'email':
+            cypher.descifrar('AES', dato["akey"], f'data/emails/{dato["net"]}.bin', 'email')
+            rsamail = open(f'data/emails/{dato["net"]}.bin', 'rb').read()
+            cypher.cifrar('AES', dato["akey"], f'data/emails/{dato["net"]}.bin', 'email')
+        if query != 'password':
+            cypher.descifrar('AES', dato["akey"], f'data/passwords/{dato["net"]}.bin', 'password')
+            rsapwd = open(f'data/passwords/{dato["net"]}.bin', 'rb').read()
+            cypher.cifrar('AES', dato["akey"], f'data/passwords/{dato["net"]}.bin', 'password')
         if dato["key"] == cypher.descifrar('RSA', dato["rkey"], rsakey):
-            print("AAA")
-        else: 
-            exit()
+            if config["fieldsforaccount"] == 1:
+                if query == 'password':
+                    if dato["user"] == cypher.descifrar('RSA', dato["rkey"], rsauser) or dato["email"] == cypher.descifrar('RSA', dato["rkey"], rsamail): 
+                        return cypher.descifrar('RSA', dato["rkey"], rsapwd)
+                    else: print("BLOCKED")
+                elif query == 'user':
+                    if dato["email"] == cypher.descifrar('RSA', dato["rkey"], rsamail) or dato["password"] == cypher.descifrar('RSA', dato["rkey"], rsapwd): 
+                        return cypher.descifrar('RSA', dato["rkey"], rsauser)
+                    else: print("BLOCKED")
+                elif query == 'email':
+                    if dato["user"] == cypher.descifrar('RSA', dato["rkey"], rsauser) or dato["password"] == cypher.descifrar('RSA', dato["rkey"], rsapwd): 
+                        return cypher.descifrar('RSA', dato["rkey"], rsamail)
+                    else: print("BLOCKED")
+            elif config["fieldsforaccount"] == 2:
+                if query == 'password':
+                    if dato["user"] == cypher.descifrar('RSA', dato["rkey"], rsauser) and dato["email"] == cypher.descifrar('RSA', dato["rkey"], rsamail): 
+                        return cypher.descifrar('RSA', dato["rkey"], rsapwd)
+                    else: print("BLOCKED")
+                elif query == 'user':
+                    if dato["email"] == cypher.descifrar('RSA', dato["rkey"], rsamail) and dato["password"] == cypher.descifrar('RSA', dato["rkey"], rsapwd): 
+                        return cypher.descifrar('RSA', dato["rkey"], rsauser)
+                    else: print("BLOCKED")
+                elif query == 'email':
+                    if dato["user"] == cypher.descifrar('RSA', dato["rkey"], rsauser) and dato["password"] == cypher.descifrar('RSA', dato["rkey"], rsapwd): 
+                        return cypher.descifrar('RSA', dato["rkey"], rsamail)
+                    else: print("BLOCKED")
+            else: exit()
+        else: exit()
+    elif config["restorekey"] != 1: exit() 
+    else:
+        if dato["user"] == cypher.descifrar('RSA', dato["rkey"], rsauser) and dato["password"] == cypher.descifrar('RSA', dato["rkey"], rsapwd) and dato["email"] == cypher.descifrar('RSA', dato["rkey"], rsamail): 
+            cypher.descifrar('AES', dato["akey"], f'data/keys/{dato["net"]}.bin', 'key')
+            rsakey = open(f'data/keys/{dato["net"]}.bin', 'rb').read()
+            cypher.cifrar('AES', dato["akey"], f'data/keys/{dato["net"]}.bin', 'key')
+            return cypher.descifrar('RSA', dato["rkey"], rsakey)
 
 def get_account_frm():
     Frame = ctk.CTk()
@@ -133,7 +183,6 @@ def get_account_frm():
     tabs.add('Usuario')
     tabs.add('Email')
     tabs.add('Contraseña')
-    tabs.add('Clave')
 
     rsa_sel = ctk.CTkOptionMenu(Frame, values=rsakeys)
     rsa_sel.grid(row=1, column=0, padx=5, pady=5)
@@ -145,7 +194,7 @@ def get_account_frm():
     email_user = ctk.CTkEntry(tabs.tab('Usuario'), placeholder_text="Correo Electronico", width=150)
     password_user = ctk.CTkEntry(tabs.tab('Usuario'), placeholder_text="Contraseña", width=150)
     key_user = ctk.CTkEntry(tabs.tab('Usuario'), placeholder_text="Clave", width=150)
-    btn_user = ctk.CTkButton(tabs.tab('Usuario'), text="Ingresar", width=150)
+    btn_user = ctk.CTkButton(tabs.tab('Usuario'), text="Ingresar", width=150, command=lambda:(query_account('user', {"password":password_user.get(), "email":email_user.get(), "key":key_user.get(), "akey":aes_sel.get(), "rkey":rsa_sel.get(), "net":net_sel.get()})))
     email_user.grid(row=0, column=0, padx=5, pady=5)
     password_user.grid(row=0, column=1, padx=5, pady=5)
     key_user.grid(row=1, column=0, padx=5, pady=5)
@@ -154,7 +203,7 @@ def get_account_frm():
     user_email = ctk.CTkEntry(tabs.tab('Email'), placeholder_text="Usuario", width=150)
     password_email = ctk.CTkEntry(tabs.tab('Email'), placeholder_text="Contraseña", width=150)
     key_email = ctk.CTkEntry(tabs.tab('Email'), placeholder_text="Clave", width=150)
-    btn_email = ctk.CTkButton(tabs.tab('Email'), text="Ingresar", width=150, command=lambda:(query_account({"user":user_email.get()})))
+    btn_email = ctk.CTkButton(tabs.tab('Email'), text="Ingresar", width=150, command=lambda:(query_account('email', {"user":user_email.get(), "password":password_email.get(), "key":key_email.get(), "akey":aes_sel.get(), "rkey":rsa_sel.get(), "net":net_sel.get()})))
     user_email.grid(row=0, column=0, padx=5, pady=5)
     password_email.grid(row=0, column=1, padx=5, pady=5)
     key_email.grid(row=1, column=0, padx=5, pady=5)
@@ -163,30 +212,31 @@ def get_account_frm():
     user_pwd = ctk.CTkEntry(tabs.tab('Contraseña'), placeholder_text="Usuario", width=150)
     email_pwd = ctk.CTkEntry(tabs.tab('Contraseña'), placeholder_text="Correo Electronico", width=150)
     key_pwd = ctk.CTkEntry(tabs.tab('Contraseña'), placeholder_text="Clave", width=150)
-    btn_pwd = ctk.CTkButton(tabs.tab('Contraseña'), text="Ingresar", width=150, command=lambda:(query_account('', {"user":user_pwd.get(), "email":email_pwd.get(), "key":key_pwd.get(), "akey":aes_sel.get(), "rkey":rsa_sel.get(), "net":net_sel.get()})))
+    btn_pwd = ctk.CTkButton(tabs.tab('Contraseña'), text="Ingresar", width=150, command=lambda:(query_account('password', {"user":user_pwd.get(), "email":email_pwd.get(), "key":key_pwd.get(), "akey":aes_sel.get(), "rkey":rsa_sel.get(), "net":net_sel.get()})))
     user_pwd.grid(row=0, column=0, padx=5, pady=5)
     email_pwd.grid(row=0, column=1, padx=5, pady=5)
     key_pwd.grid(row=1, column=0, padx=5, pady=5)
     btn_pwd.grid(row=1, column=1, padx=5, pady=5)
 
-    user_key = ctk.CTkEntry(tabs.tab('Clave'), placeholder_text="Usuario", width=150)
-    email_key = ctk.CTkEntry(tabs.tab('Clave'), placeholder_text="Correo Electronico", width=150)
-    password_key = ctk.CTkEntry(tabs.tab('Clave'), placeholder_text="Contraseña", width=150)
-    btn_key = ctk.CTkButton(tabs.tab('Clave'), text="Ingresar", width=150)
-    user_key.grid(row=0, column=0, padx=5, pady=5)
-    email_key.grid(row=0, column=1, padx=5, pady=5)
-    password_key.grid(row=1, column=0, padx=5, pady=5)
-    btn_key.grid(row=1, column=1, padx=5, pady=5)
+    if config["restorekey"] == 1:
+        tabs.add('Clave')
+        user_key = ctk.CTkEntry(tabs.tab('Clave'), placeholder_text="Usuario", width=150)
+        email_key = ctk.CTkEntry(tabs.tab('Clave'), placeholder_text="Correo Electronico", width=150)
+        password_key = ctk.CTkEntry(tabs.tab('Clave'), placeholder_text="Contraseña", width=150)
+        btn_key = ctk.CTkButton(tabs.tab('Clave'), text="Ingresar", width=150, command=lambda:(query_account('key', {"user":user_pwd.get(), "email":email_pwd.get(), "password":password_key.get(), "akey":aes_sel.get(), "rkey":rsa_sel.get(), "net":net_sel.get()})))
+        user_key.grid(row=0, column=0, padx=5, pady=5)
+        email_key.grid(row=0, column=1, padx=5, pady=5)
+        password_key.grid(row=1, column=0, padx=5, pady=5)
+        btn_key.grid(row=1, column=1, padx=5, pady=5)
 
     Frame.mainloop()
-
 
 ########################################
 ############### MAIN APP ###############
 ########################################
     
 App = ctk.CTk()
-App.title("Tr1x-5ec")
+App.title("Home | Tr1x-5ec")
 App.geometry("430x430")
 
 btn1 = ctk.CTkButton(App, text="Añadir Cuenta", command=add_account_frm, width=100)
