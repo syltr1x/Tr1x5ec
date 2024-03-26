@@ -4,5 +4,6 @@
     "singleaesforrsa":1,
     "singlersaforkey":0,
     "restorekey":0,
-    "fieldsforaccount":1
+    "fieldsforaccount":1,
+    "cleanerrors":0
 }
