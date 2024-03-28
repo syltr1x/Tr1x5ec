@@ -5,6 +5,6 @@
     "aesforeachrsa":1,
     "singlersaforkey":0,
     "restorekey":0,
-    "fieldsforaccount":2,
+    "fieldsforaccount":1,
     "cleanerrors": 0
 }
