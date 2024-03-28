@@ -7,10 +7,34 @@ import cypher
 ########################################
 
 def add_account(net, user, email, pwd, keyName, tkey):
+    if config["aesforrsa"] == 1:
+        if config["singleaesforrsa"] == 1:
+            if config["aesforeachrsa"] == 1:
+                cypher.descifrar('AES', keyName, f'tray/{keyName}.pub.pem', 'rsapc')
+            elif config["aesforeachrsa"] == 0:
+                cypher.descifrar('AES', keyName, f'tray/{keyName}.pub.pem', 'rsa')
+            else: exit()
+        elif config["singleaesforrsa"] == 0:
+            cypher.descifrar('AES', keyName, f'tray/{keyName}.pub.pem', 'all')
+        else: exit()
+    elif not config["aesforrsa"]: exit()
+    
     user = cypher.cifrar('RSA', keyName, user)
     pwd = cypher.cifrar('RSA', keyName, pwd)
     email = cypher.cifrar('RSA', keyName, email)
-    tkey = cypher.cifrar('RSA', keyName, str(tkey))    
+    tkey = cypher.cifrar('RSA', keyName, str(tkey))
+
+    if config["aesforrsa"] == 1:
+        if config["singleaesforrsa"] == 1:
+            if config["aesforeachrsa"] == 1:
+                cypher.cifrar('AES', keyName, f'tray/{keyName}.pub.pem', 'rsapc')
+            elif config["aesforeachrsa"] == 0:
+                cypher.cifrar('AES', keyName, f'tray/{keyName}.pub.pem', 'rsa')
+            else: exit()
+        elif config["singleaesforrsa"] == 0:
+            cypher.cifrar('AES', keyName, f'tray/{keyName}.pub.pem', 'all')
+        else: exit()
+    elif not config["aesforrsa"]: exit()
 
     fu = open(f'data/users/{net}.bin', 'wb')
     fu.write(user) 
@@ -28,12 +52,12 @@ def add_account(net, user, email, pwd, keyName, tkey):
     fk.write(tkey)
     fk.close()
     
-    if config["singleaesforfile"] == 1:
+    if config["singleaesforfile"] == 0:
         cypher.cifrar('AES', keyName, f'data/users/{net}.bin', 'all')
         cypher.cifrar('AES', keyName, f'data/passwords/{net}.bin', 'all')
         cypher.cifrar('AES', keyName, f'data/emails/{net}.bin', 'all')
         cypher.cifrar('AES', keyName, f'data/keys/{net}.bin', 'all')
-    elif config["singleaesforfile"] == 0:
+    elif config["singleaesforfile"] == 1:
         cypher.cifrar('AES', keyName, f'data/users/{net}.bin', 'user')
         cypher.cifrar('AES', keyName, f'data/passwords/{net}.bin', 'password')
         cypher.cifrar('AES', keyName, f'data/emails/{net}.bin', 'email')
@@ -62,9 +86,16 @@ def add_key_frm():
 
     def create_key(algoritmo, name, size):
         if algoritmo == "AES":
-            if config["singleaesforfile"] == 1:
+            if config["singleaesforrsa"] == 1:
+                if config["aesforeachrsa"] == 1:
+                    cypher.create_key('AES', 'rsapc', size, name)
+                    cypher.create_key('AES', 'rsapv', size, name)
+                elif config["aesforeachrsa"] == 0:
+                    cypher.create_key('AES', 'rsa', size, name)
+            elif not config["singleaesforrsa"]: exit()
+            if config["singleaesforfile"] == 0:
                 cypher.create_key('AES', 'all', size, name)
-            elif config["singleaesforfile"] == 0:
+            elif config["singleaesforfile"] == 1:
                 cypher.create_key('AES', 'user', size, name)
                 cypher.create_key('AES', 'password', size, name)
                 cypher.create_key('AES', 'email', size, name)
@@ -74,6 +105,14 @@ def add_key_frm():
             if config["singlersaforkey"] == 1:
                 cypher.create_key('RSA', longitud=size, name=f"{name}_key")
             cypher.create_key('RSA', longitud=size, name=name)
+            if config["aesforrsa"] == 1:
+                if config["aesforeachrsa"] == 1:
+                    cypher.cifrar('AES', name, f'tray/{name}.pri.pem', 'rsapv')
+                    cypher.cifrar('AES', name, f'tray/{name}.pub.pem', 'rsapc')
+                elif config["aesforeachrsa"] == 0:
+                    cypher.cifrar('AES', name, f'tray/{name}.pri.pem', 'rsa')
+                    cypher.cifrar('AES', name, f'tray/{name}.pub.pem', 'rsa')
+                else: exit()
         else: exit()
     ktype = ctk.CTkComboBox(Frame, values=["RSA", "AES"], width=220, command=change_sizes)
     ktype.set('Algoritmo')
