@@ -194,6 +194,7 @@ def add_account_frm():
     Frame.mainloop()
 
 def query_account(query, dato):
+    errors = 0
     if query != 'key':
         cypher.descifrar('AES', dato["akey"], f'data/keys/{dato["net"]}.bin', 'key')
         rsakey = open(f'data/keys/{dato["net"]}.bin', 'rb').read()
@@ -215,28 +216,37 @@ def query_account(query, dato):
                 if query == 'password':
                     if dato["user"] == cypher.descifrar('RSA', dato["rkey"], rsauser) or dato["email"] == cypher.descifrar('RSA', dato["rkey"], rsamail): 
                         return cypher.descifrar('RSA', dato["rkey"], rsapwd)
-                    else: print("BLOCKED")
+                    else: errors += 1
                 elif query == 'user':
                     if dato["email"] == cypher.descifrar('RSA', dato["rkey"], rsamail) or dato["password"] == cypher.descifrar('RSA', dato["rkey"], rsapwd): 
                         return cypher.descifrar('RSA', dato["rkey"], rsauser)
-                    else: print("BLOCKED")
+                    else: errors += 1
                 elif query == 'email':
                     if dato["user"] == cypher.descifrar('RSA', dato["rkey"], rsauser) or dato["password"] == cypher.descifrar('RSA', dato["rkey"], rsapwd): 
                         return cypher.descifrar('RSA', dato["rkey"], rsamail)
-                    else: print("BLOCKED")
+                    else: errors += 1
             elif config["fieldsforaccount"] == 2:
                 if query == 'password':
                     if dato["user"] == cypher.descifrar('RSA', dato["rkey"], rsauser) and dato["email"] == cypher.descifrar('RSA', dato["rkey"], rsamail): 
                         return cypher.descifrar('RSA', dato["rkey"], rsapwd)
-                    else: print("BLOCKED")
+                    else: errors += 1
                 elif query == 'user':
                     if dato["email"] == cypher.descifrar('RSA', dato["rkey"], rsamail) and dato["password"] == cypher.descifrar('RSA', dato["rkey"], rsapwd): 
                         return cypher.descifrar('RSA', dato["rkey"], rsauser)
-                    else: print("BLOCKED")
+                    else: errors += 1
                 elif query == 'email':
                     if dato["user"] == cypher.descifrar('RSA', dato["rkey"], rsauser) and dato["password"] == cypher.descifrar('RSA', dato["rkey"], rsapwd): 
                         return cypher.descifrar('RSA', dato["rkey"], rsamail)
-                    else: print("BLOCKED")
+                    else: errors += 1
+            if config["cleanerrors"] != 0 and errors >= config["cleanerrors"]:
+                os.remove(f'data/passwords/{dato["net"]}.bin')
+                os.remove(f'data/emails/{dato["net"]}.bin')
+                os.remove(f'data/keys/{dato["net"]}.bin')
+                os.remove(f'data/users/{dato["net"]}.bin')
+                kslt = list([i for i in os.listdir('data/secrets/') if i.split('_')[0] == dato["akey"]])
+                for i in kslt: os.remove(f'data/secrets/{i}')
+                kslt = list([i for i in os.listdir('tray/') if i.split('.')[0] == dato["rkey"]])
+                for i in kslt: os.remove(f'tray/{i}')
             else: exit()
         else: exit()
     elif config["restorekey"] != 1: exit() 
