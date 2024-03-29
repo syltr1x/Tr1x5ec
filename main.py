@@ -1,5 +1,15 @@
 import customtkinter as ctk
 import json, os
+try: 
+    os.listdir('tray')
+    os.listdir('data/secrets')
+except:
+    os.mkdir('tray')
+    os.makedirs('data/secrets')
+    os.mkdir('data/users')
+    os.mkdir('data/emails')
+    os.mkdir('data/keys')
+    os.mkdir('data/passwords')
 import cypher
 
 ########################################
@@ -17,7 +27,7 @@ def add_account(net, user, email, pwd, keyName, tkey):
         elif config["singleaesforrsa"] == 0:
             cypher.descifrar('AES', keyName, f'tray/{keyName}.pub.pem', 'all')
         else: exit()
-    elif not config["aesforrsa"]: exit()
+    elif config["aesforrsa"] != 0: exit()
     
     user = cypher.cifrar('RSA', keyName, user)
     pwd = cypher.cifrar('RSA', keyName, pwd)
@@ -34,7 +44,7 @@ def add_account(net, user, email, pwd, keyName, tkey):
         elif config["singleaesforrsa"] == 0:
             cypher.cifrar('AES', keyName, f'tray/{keyName}.pub.pem', 'all')
         else: exit()
-    elif not config["aesforrsa"]: exit()
+    elif config["aesforrsa"] != 0: exit()
 
     fu = open(f'data/users/{net}.bin', 'wb')
     fu.write(user) 
@@ -92,7 +102,7 @@ def add_key_frm():
                     cypher.create_key('AES', 'rsapv', size, name)
                 elif config["aesforeachrsa"] == 0:
                     cypher.create_key('AES', 'rsa', size, name)
-            elif not config["singleaesforrsa"]: exit()
+            elif config["singleaesforrsa"] != 0: exit()
             if config["singleaesforfile"] == 0:
                 cypher.create_key('AES', 'all', size, name)
             elif config["singleaesforfile"] == 1:
