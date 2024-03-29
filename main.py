@@ -25,14 +25,20 @@ def add_account(net, user, email, pwd, keyName, tkey):
                 cypher.descifrar('AES', keyName, f'tray/{keyName}.pub.pem', 'rsa')
             else: exit()
         elif config["singleaesforrsa"] == 0:
-            cypher.descifrar('AES', keyName, f'tray/{keyName}.pub.pem', 'all')
+            if config["singleaesforfile"] == 0:
+                cypher.descifrar('AES', keyName, f'tray/{keyName}.pub.pem', 'all')
+            elif config["singleaesforfile"] == 1:
+                # alert('cfg_err', '- Crear 1 clave AES para RSA (en contra de config3=singleaesforrsa)')
+                cypher.descifrar('AES', keyName, f'tray/{keyName}.pub.pem', 'rsa')
+            else: exit()
         else: exit()
     elif config["aesforrsa"] != 0: exit()
-    
+    input("DESCIFRADO")
     user = cypher.cifrar('RSA', keyName, user)
     pwd = cypher.cifrar('RSA', keyName, pwd)
     email = cypher.cifrar('RSA', keyName, email)
     tkey = cypher.cifrar('RSA', keyName, str(tkey))
+    input("CIFRADO RSA")
 
     if config["aesforrsa"] == 1:
         if config["singleaesforrsa"] == 1:
@@ -42,9 +48,15 @@ def add_account(net, user, email, pwd, keyName, tkey):
                 cypher.cifrar('AES', keyName, f'tray/{keyName}.pub.pem', 'rsa')
             else: exit()
         elif config["singleaesforrsa"] == 0:
-            cypher.cifrar('AES', keyName, f'tray/{keyName}.pub.pem', 'all')
+            if config["singleaesforfile"] == 0:
+                cypher.cifrar('AES', keyName, f'tray/{keyName}.pub.pem', 'all')
+            elif config["singleaesforfile"] == 1:
+                # alert('cfg_err', '- Crear 1 clave AES para RSA (en contra de config3=singleaesforrsa)')
+                cypher.cifrar('AES', keyName, f'tray/{keyName}.pub.pem', 'rsa')
+            else: exit()
         else: exit()
     elif config["aesforrsa"] != 0: exit()
+    input("CIFRADO AES")
 
     fu = open(f'data/users/{net}.bin', 'wb')
     fu.write(user) 
@@ -96,33 +108,50 @@ def add_key_frm():
 
     def create_key(algoritmo, name, size):
         if algoritmo == "AES":
-            if config["singleaesforrsa"] == 1:
-                if config["aesforeachrsa"] == 1:
-                    cypher.create_key('AES', 'rsapc', size, name)
-                    cypher.create_key('AES', 'rsapv', size, name)
-                elif config["aesforeachrsa"] == 0:
+            if config["aesforrsa"] == 1:
+                if config["singleaesforrsa"] == 1:
+                    if config["aesforeachrsa"] == 1:
+                        cypher.create_key('AES', 'rsapc', size, name)
+                        cypher.create_key('AES', 'rsapv', size, name)
+                    elif config["aesforeachrsa"] == 0:
+                        cypher.create_key('AES', 'rsa', size, name)
+                    else: exit()
+                elif config["singleaesforrsa"] == 0:
+                    # alert('cfg_err', '- Crear 1 clave AES para RSA (en contra de config3=singleaesforrsa)')
                     cypher.create_key('AES', 'rsa', size, name)
-            elif config["singleaesforrsa"] != 0: exit()
-            if config["singleaesforfile"] == 0:
-                cypher.create_key('AES', 'all', size, name)
-            elif config["singleaesforfile"] == 1:
-                cypher.create_key('AES', 'user', size, name)
-                cypher.create_key('AES', 'password', size, name)
-                cypher.create_key('AES', 'email', size, name)
-                cypher.create_key('AES', 'key', size, name)
-            else: exit()
+                else: exit()
+                if config["singleaesforfile"] == 0:
+                    cypher.create_key('AES', 'all', size, name)
+                elif config["singleaesforfile"] == 1:
+                    cypher.create_key('AES', 'user', size, name)
+                    cypher.create_key('AES', 'password', size, name)
+                    cypher.create_key('AES', 'email', size, name)
+                    cypher.create_key('AES', 'key', size, name)
+                else: exit()
+            elif config["aesforrsa"] != 0: exit()
         elif algoritmo == "RSA":
             if config["singlersaforkey"] == 1:
                 cypher.create_key('RSA', longitud=size, name=f"{name}_key")
             cypher.create_key('RSA', longitud=size, name=name)
             if config["aesforrsa"] == 1:
-                if config["aesforeachrsa"] == 1:
-                    cypher.cifrar('AES', name, f'tray/{name}.pri.pem', 'rsapv')
-                    cypher.cifrar('AES', name, f'tray/{name}.pub.pem', 'rsapc')
-                elif config["aesforeachrsa"] == 0:
-                    cypher.cifrar('AES', name, f'tray/{name}.pri.pem', 'rsa')
-                    cypher.cifrar('AES', name, f'tray/{name}.pub.pem', 'rsa')
+                if config["singleaesforrsa"] == 1:
+                    if config["aesforeachrsa"] == 1:
+                        cypher.cifrar('AES', name, f'tray/{name}.pri.pem', 'rsapv')
+                        cypher.cifrar('AES', name, f'tray/{name}.pub.pem', 'rsapc')
+                    elif config["aesforeachrsa"] == 0:
+                        cypher.cifrar('AES', name, f'tray/{name}.pri.pem', 'rsa')
+                        cypher.cifrar('AES', name, f'tray/{name}.pub.pem', 'rsa')
+                    else: exit()
+                elif config["singleaesforrsa"] == 0:
+                    if config["singleaesforfile"] == 0:
+                        cypher.cifrar('AES', name, f'tray/{name}.pri.pem', 'all')
+                        cypher.cifrar('AES', name, f'tray/{name}.pub.pem', 'all')
+                    elif config["singleaesforfile"] == 1:
+                        cypher.cifrar('AES', name, f'tray/{name}.pri.pem', 'rsa')
+                        cypher.cifrar('AES', name, f'tray/{name}.pub.pem', 'rsa')
+                    else: exit()
                 else: exit()
+            elif config["aesforrsa"] != 0: exit()
         else: exit()
     ktype = ctk.CTkComboBox(Frame, values=["RSA", "AES"], width=220, command=change_sizes)
     ktype.set('Algoritmo')
@@ -289,7 +318,7 @@ App.title("Home | Tr1x-5ec")
 App.geometry("430x430")
 
 btn1 = ctk.CTkButton(App, text="Añadir Cuenta", command=add_account_frm, width=100)
-btn1.configure(state="disabled", fg_color='#144870') if not len(os.listdir('data/secrets/')) >= 4 or not len(os.listdir('tray/')) >= 1 else None
+btn1.configure(state="disabled", fg_color='#144870') if not len(os.listdir('data/secrets/')) >= 1 or not len(os.listdir('tray/')) >= 1 else None
 btn1.grid(row=0, column=0, padx=5, pady=5)
 
 btn2 = ctk.CTkButton(App, text="Consultar Cuenta", command=get_account_frm, width=100)
