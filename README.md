@@ -16,6 +16,7 @@
 !!! INFORMACION !!!
 En caso de activar la opcion "cleanerrors", si se cometen la cantidad de errores especificados se borraran las siguientes cosas:
 - Archivos de cuenta: email, user, password, key
-!- Archivos de clave: tanto la clave AES como la RSA que se utilizen para cifrar dicha cuenta se eliminaran. Esto podria ser peligroso si estas claves estan
+
+- Archivos de clave: tanto la clave AES como la RSA que se utilizen para cifrar dicha cuenta se eliminaran. Esto podria ser peligroso si estas claves estan
 asociadas tambien a otra cuenta, lo cual dejaria a la segunda cuenta irrecuperable, en caso de activar el "cleanerrors" aconsejamos usar distintos conjuntos de AES y RSA
 para cada cuenta 
