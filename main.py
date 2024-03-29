@@ -1,5 +1,5 @@
 import customtkinter as ctk
-import json, os
+import json, os, time as tm
 try: 
     os.listdir('tray')
     os.listdir('data/secrets')
@@ -16,6 +16,23 @@ import cypher
 ############## FUNCTIONS ###############
 ########################################
 
+class alert(ctk.CTk):
+    def __init__(self, title, desc):
+        titles = {
+            "cfg_alert": "Hemos detectado una configuracion peligrosa. revisala",
+            "uknw_err": "Ha surgido un error desconocido, porfavor aguarda.",
+            "cfg_err": "Hemos detectado una incompatibilidad\n en tus configuraciones"
+        }
+        super().__init__()
+        self.title("Alert | Tr1x-5ec")
+        self.geometry("320x195")
+        self.label1 = ctk.CTkLabel(self, text=titles[title], font=("Roboto", 16))
+        self.label1.grid(row=0, column=0, padx=5, pady=5)
+        self.label2 = ctk.CTkLabel(self, text=desc, font=("Roboto", 12))
+        self.label2.grid(row=1, column=0, padx=5, pady=5)
+        self.btn = ctk.CTkButton(self, text="Entendido", command=lambda:(self.destroy()))
+        self.btn.grid(row=2, column=0, padx=5, pady=5)
+        
 def add_account(net, user, email, pwd, keyName, tkey):
     if config["aesforrsa"] == 1:
         if config["singleaesforrsa"] == 1:
@@ -28,7 +45,8 @@ def add_account(net, user, email, pwd, keyName, tkey):
             if config["singleaesforfile"] == 0:
                 cypher.descifrar('AES', keyName, f'tray/{keyName}.pub.pem', 'all')
             elif config["singleaesforfile"] == 1:
-                # alert('cfg_err', '- Crear 1 clave AES para RSA (en contra de config3=singleaesforrsa)')
+                alert('cfg_err', '- Crear 1 clave AES para RSA (en contra de config3=singleaesforrsa)')
+                alert.mainloop()
                 cypher.descifrar('AES', keyName, f'tray/{keyName}.pub.pem', 'rsa')
             else: exit()
         else: exit()
@@ -51,7 +69,8 @@ def add_account(net, user, email, pwd, keyName, tkey):
             if config["singleaesforfile"] == 0:
                 cypher.cifrar('AES', keyName, f'tray/{keyName}.pub.pem', 'all')
             elif config["singleaesforfile"] == 1:
-                # alert('cfg_err', '- Crear 1 clave AES para RSA (en contra de config3=singleaesforrsa)')
+                alert('cfg_err', '- Crear 1 clave AES para RSA (en contra de config3=singleaesforrsa)')
+                alert.mainloop()
                 cypher.cifrar('AES', keyName, f'tray/{keyName}.pub.pem', 'rsa')
             else: exit()
         else: exit()
@@ -117,7 +136,8 @@ def add_key_frm():
                         cypher.create_key('AES', 'rsa', size, name)
                     else: exit()
                 elif config["singleaesforrsa"] == 0:
-                    # alert('cfg_err', '- Crear 1 clave AES para RSA (en contra de config3=singleaesforrsa)')
+                    alert('cfg_err', '- Crear 1 clave AES para RSA (en contra de config3=singleaesforrsa)')
+                    alert.mainloop()
                     cypher.create_key('AES', 'rsa', size, name)
                 else: exit()
                 if config["singleaesforfile"] == 0:
