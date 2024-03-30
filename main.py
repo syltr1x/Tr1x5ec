@@ -51,12 +51,10 @@ def add_account(net, user, email, pwd, keyName, tkey):
             else: exit()
         else: exit()
     elif config["aesforrsa"] != 0: exit()
-    input("DESCIFRADO")
     user = cypher.cifrar('RSA', keyName, user)
     pwd = cypher.cifrar('RSA', keyName, pwd)
     email = cypher.cifrar('RSA', keyName, email)
     tkey = cypher.cifrar('RSA', keyName, str(tkey))
-    input("CIFRADO RSA")
 
     if config["aesforrsa"] == 1:
         if config["singleaesforrsa"] == 1:
@@ -75,7 +73,6 @@ def add_account(net, user, email, pwd, keyName, tkey):
             else: exit()
         else: exit()
     elif config["aesforrsa"] != 0: exit()
-    input("CIFRADO AES")
 
     fu = open(f'data/users/{net}.bin', 'wb')
     fu.write(user) 
@@ -187,7 +184,7 @@ def add_key_frm():
     Frame.mainloop()
 
 def add_account_frm():
-    tkey = cypher.gen_key()
+    tkey = cypher.gen_key(config["apikey"])
     keysList = [i.split('.')[0] for i in os.listdir('tray/')]
     keysList = list(set(keysList))
 
